@@ -330,5 +330,5 @@ def main():
         rospy.is_shutdown()
     return 0
 
-if _name_ == '_main_':
+if __name__ == '__main__':
     sys.exit(main())
