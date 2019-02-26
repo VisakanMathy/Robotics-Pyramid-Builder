@@ -326,7 +326,7 @@ def main():
     
     count = 0
     while not rospy.is_shutdown() and count < len(block_poses):
-        pnp.pick(block_poses[count])
+        pnp.pick(block_poses[count]) #simplified pick and place
         count += 1
         pnp.place(block_poses[count])
         count += 1
