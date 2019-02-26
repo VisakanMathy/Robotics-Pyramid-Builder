@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<launch>
+
+  <!-- these are the arguments you can pass this launch file, for example paused:=true -->
+  <arg name="paused" default="false"/>
+  <arg name="use_sim_time" default="true"/>
+  <arg name="gui" default="true"/>
+  <arg name="headless" default="false"/>
+  <arg name="debug" default="false"/>
+
+  <!-- These arguments load the electric grippers, for example left_electric_gripper:=true -->
+  <arg name="left_electric_gripper" default="true"/>
+  <arg name="right_electric_gripper" default="true"/>
+  <arg name="null_gripper" default="false"/>
+
+  <!-- These argurment enable the visualization of the lidar ray -->
+  <arg name="lidar_visualize" default="false"/>
+  <arg name="lidar_collision" default="true"/> <!-- Set to false if you want to collect data with the lidar -->
+  <arg name="cloud_out"       default="/robot/lidar/3d_cloud" /> <!-- Name of the topic to publish the 3d point cloud -->
+  <arg name="times_topic"     default="assemble_times" /> <!-- Name of the topic to publish times for laser assembler -->
+  <arg name="scan_in"         default="/robot/laser/scan" />   <!-- Name of the scan topic published by the laser -->
+
+  <!-- Load the URDF into the ROS Parameter Server -->
+  <!-- This xacro will pull in baxter_base.urdf.xacro, left_end_effector.urdf.xacro,
+                                           and right_end_effector.urdf.xacro
+       Note: if you set this to false, you MUST have set the robot_description prior
+             to launching baxter_world -->
+  <arg name="load_robot_description" default="true"/>
+  <param if="$(arg load_robot_description)" name="robot_description"
+      command="$(find xacro)/xacro.py --inorder $(find baxter_description)/urdf/baxter.urdf.xacro gazebo:=true lidar_visualize:=$(arg lidar_visualize) lidar_collision:=$(arg lidar_collision) null_gripper:=$(arg null_gripper)"/>
+
+  <!-- We resume the logic in empty_world.launch, changing the name of the world to be launched -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find baxter_gazebo)/worlds/baxter.world"/>
+    <arg name="debug" value="$(arg debug)" />
+    <arg name="gui" value="$(arg gui)" />
+    <arg name="paused" value="$(arg paused)"/>
+    <arg name="use_sim_time" value="$(arg use_sim_time)"/>
+    <arg name="headless" value="$(arg headless)"/>
+  </include>
+
+  <!-- Load the software version into the ROS Parameter Server -->
+  <param name="rethink/software_version" value="1.2.0" />
+
+  <!-- Publish a static transform between the world and the base of the robot -->
+  <node pkg="tf2_ros" type="static_transform_publisher" name="base_to_world" args="0 0 0 0 0 0 1 world base" />
+
+  <!-- Run a python script to the send a service call to gazebo_ros to spawn a URDF robot -->
+   <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
+  args="-param robot_description -urdf -z 0.63 -model baxter
+        -J baxter::right_s0 1.0
+        -J baxter::right_s1 -2.07
+        -J baxter::right_e0 -3.0
+        -J baxter::right_e1 2.55
+        -J baxter::right_w0 -0.0
+        -J baxter::right_w1 0.01
+        -J baxter::right_w2 0.0
+        -J baxter::left_s0 -1
+        -J baxter::left_s1 -2.07
+        -J baxter::left_e0 3.0
+        -J baxter::left_e1 2.55
+        -J baxter::left_w0 0.0
+        -J baxter::left_w1 0.01
+        -J baxter::left_w2 0.0"  />
+
+  <!-- ros_control baxter launch file -->
+  <include file="$(find baxter_sim_hardware)/launch/baxter_sdk_control.launch">
+      <arg name="right_electric_gripper" value="$(arg right_electric_gripper)"/>
+      <arg name="left_electric_gripper" value="$(arg left_electric_gripper)"/>
+      <arg name="gui" value="$(arg gui)" />
+  </include>
+  
+ <!-- Start the node that controls the spinning speed of the lidar-->
+  <node name="lidar_speed_controller" pkg="baxter_gazebo" type="lidar_speed_controller.py" required="true" output="screen">
+    <param name="controller_name"           value="/robot/lidar_position_controller" />
+    <param name="speed_topic"           value="/robot/lidar_speed_controller/command" />
+  </node>
+
+   <!-- Start the laser_assembler to combine laser scans into PointCloud2 -->
+    <node pkg="laser_assembler" type="laser_scan_assembler" name="my_assembler" required="true" output="screen">
+        <!-- Remap the input topic name -->
+        <remap from="scan"  to="$(arg scan_in)"/>
+        <param name="max_scans"     type="int"      value="150" />
+        <param name="fixed_frame"   type="string"   value="world" />
+    </node>
+
+  <!-- Start the node that requests scans to be assembled and publishes the point cloud -->
+    <node pkg="baxter_gazebo" type="scan_assembler.py" name="scan_assembler_client" required="true" output="screen">
+        <param name="times_in"      value="$(arg times_topic)" />
+        <param name="cloud_out"     value="$(arg cloud_out)" />
+    </node>
+
+  <!-- Start the octomap server node to build the complete 3d map-->
+  <node pkg="octomap_server" type="octomap_server_node" name="octomap_server">
+    <param name="resolution" value="0.05" />
+    <!-- fixed map frame -->
+    <param name="frame_id" type="string" value="world" />
+    <!-- maximum range to integrate (speedup!), value will influence the distance up to the sensor is going to collect data -->
+    <param name="sensor_model/max_range" value="5.0" />
+    <!-- data source to integrate (PointCloud2) -->
+    <remap from="cloud_in" to="$(arg cloud_out)" />
+  </node>
+</launch>
