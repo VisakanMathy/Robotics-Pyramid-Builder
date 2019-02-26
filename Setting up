@@ -1,0 +1,10 @@
+In a new terminal
+
+cd grasping_ws
+./baxter_world.launch
+
+ctrl+shift+t
+
+cd src/baxter_simulator/baxter_sim_examples/scripts
+rosrun baxter_sim_examples ik_pick_and_place_demo.py
+
