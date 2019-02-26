@@ -296,14 +296,14 @@ def main():
     
     #starting position
     s = [0, 0, 0] #this is the permanent starting position which is reeferenced as the centre of the brick
-    overhead_orientation = 4
+    
     #Input for number of layers
-    x = int(input("how many layers?"))
+    x = int(input("how many layers?\n"))
     x1 = list(range(1,x+1))
     x1.reverse()
     layers = np.asarray(x1)
     m = layers.tolist() #this is a list of number of bricks in each layer. e.g. [3, 2, 1] is 3 bricks in base layer, 2 in second etc
-    #lay = [] #this is the matrix containint all the coordinates for the pyramid in x, y, z which corrrespond to length, depth, width with the brick normally orientated
+    lay = [] #this is the matrix containint all the coordinates for the pyramid in x, y, z which corrrespond to length, depth, width with the brick normally orientated
     
     for j in range(0, x): #This loops the inner code from 0-x i.e. 0 to x number of layers
         for i in range(0, m[j]): #this is doing the loop m[J] times (e.g. first time, it will look at the value of m[0] which is the number of bricks in the base layer)
@@ -312,17 +312,19 @@ def main():
             cnew = c #Makes cnew equal to the c coordinates
             if i in range(1, m[j]): #so i needs to be between 1-m[j] as when i = 0, as this is the first loop, so creates the first recursive value to put values into the next loop
                 cnew[2] = i*(zb + 0.03) #increased z coordinate by width + 3cm gap
-                #lay.append(s) #appending starting position first
-                #lay.append(cnew) #appending new coordinate position
-                block_poses.append(Pose(position=Point(x=float((s[0])), y=float((s[1])), z=float((s[2]))),orientation=overhead_orientation))  
-                block_poses.append(Pose(position=Point(x=float((cnew[0])), y=float((cnew[1])), z=float((cnew[2]))),orientation=overhead_orientation))                
+                lay.append(s) #appending starting position first
+                lay.append(cnew) #appending new coordinate position              
             else:
-                #lay.append(s) #appending first starting position  
-                #lay.append(cnew) #appending first coordinate position 
-                block_poses.append(Pose(position=Point(x=float((s[0])), y=float((s[1])), z=float((s[2]))),orientation=overhead_orientation)) 
-                block_poses.append(Pose(position=Point(x=float((cnew[0])), y=float((cnew[1])), z=float((cnew[2]))),orientation=overhead_orientation))
+                lay.append(s) #appending first starting position  
+                lay.append(cnew) #appending first coordinate position 
                              
     count = 0
+    
+    for coord_set in lay:
+        block_poses.append(Pose(position=Point(x=coord_set[0], y=coord_set[1], z=coord_set[2]),orientation=overhead_orientation))
+        
+        
+    
     while not rospy.is_shutdown():
         pnp.pick(block_poses[count])
         pnp.place(block_poses[count+1])
