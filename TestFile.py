@@ -181,6 +181,7 @@ class PickAndPlace(object):
         # retract to clear object
         self._retract()
 
+        
 def load_gazebo_models(table_pose=Pose(position=Point(x=1.0, y=0, z=-0.5)),
                        table_reference_frame="world",
                        block_pose=Pose(position=Point(x=0.6725, y=0.1265, z=0.2825)),
@@ -211,6 +212,28 @@ def load_gazebo_models(table_pose=Pose(position=Point(x=1.0, y=0, z=-0.5)),
                                block_pose, block_reference_frame)
     except rospy.ServiceException, e:
         rospy.logerr("Spawn URDF service call failed: {0}".format(e))
+        
+def load_brick(brick_pose=Pose(position=Point(x=0.5, y=0.5, z=0)),
+				brick_reference_frame =  'world'):
+
+	model_path = rospkg.RosPack().get_path('baxter_sim_examples')+"/models/"
+    # Load Table SDF
+	
+	brick_xml = ''
+
+	with open (model_path + "new_brick/model.sdf", "r") as brick_file:
+		brick_xml=brick_file.read().replace('\n', '')
+
+	try:
+		spawn_sdf = rospy.ServiceProxy('/gazebo/spawn_sdf_model', SpawnModel)
+		resp_sdf = spawn_sdf("new_brick", brick_xml, "/",
+                             brick_pose, brick_reference_frame)
+	except rospy.ServiceException, e:
+		rospy.logerr("Spawn SDF service call failed: {0}".format(e))
+	    # Spawn Block URDF
+	rospy.wait_for_service('/gazebo/spawn_urdf_model')
+
+
 
 def delete_gazebo_models():
     # This will be called on ROS Exit, deleting Gazebo models
@@ -221,6 +244,7 @@ def delete_gazebo_models():
         delete_model = rospy.ServiceProxy('/gazebo/delete_model', DeleteModel)
         resp_delete = delete_model("cafe_table")
         resp_delete = delete_model("block")
+        resp_delete = delete_model('new_brick')
     except rospy.ServiceException, e:
         rospy.loginfo("Delete Model service call failed: {0}".format(e))
 
@@ -243,6 +267,7 @@ def main():
     # Note that the models reference is the /world frame
     # and the IK operates with respect to the /base frame
     load_gazebo_models()
+    load_brick()
     # Remove models from the scene on shutdown
     rospy.on_shutdown(delete_gazebo_models)
 
