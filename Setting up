@@ -2,7 +2,7 @@ In a new terminal
 
 cd grasping_ws/
 ./baxter.sh sim
-roslaunch baxter_gazebo baxter_baxter_world.launch
+roslaunch baxter_gazebo baxter_world.launch
 
 ctrl+shift+t
 
