@@ -334,6 +334,7 @@ def main():
     y_test = input('what is y? /n')
     z_test = input('what is z? /n')
     #Input for number of layers
+# testing with x:0.7 y:0.05 z:-0.3
 
     coord_set = [x_test,y_test,z_test]
    
