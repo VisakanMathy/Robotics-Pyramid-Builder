@@ -293,13 +293,13 @@ def main():
                              'left_s0': -0.08000397926829805,
                              'left_s1': -0.9999781166910306}
 
-    starting_joint_angles_right = {'right_w0': 0.6699952259595108,
-                             'right_w1': 1.030009435085784,
-                             'right_w2': -0.4999997247485215,
-                             'right_e0': -1.189968899785275,
-                             'right_e1': 1.9400238130755056,
-                             'right_s0': -0.08000397926829805,
-                             'right_s1': -0.9999781166910306}
+    starting_joint_angles_right = {'right_w0': 0.33,
+                             'right_w1': 0.8,
+                             'right_w2': -0.1,
+                             'right_e0': 0.0,
+                             'right_e1': 1.4,
+                             'right_s0': 0.75,
+                             'right_s1': -1.1}
                              
     pnp_left = PickAndPlace('left', hover_distance)
 
