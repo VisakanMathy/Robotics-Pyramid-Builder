@@ -1,5 +1,5 @@
 import numpy as np
-
+import math
 #scale value:
 sc = 1; #this scales all the brick dimensions and the gaps between the bricks
 
@@ -14,9 +14,9 @@ yb = ybrick*sc
 zb = zbrick*sc
 
 #starting position
-xs = 0; #this is the starting position along length
+xs = 0.512; #this is the starting position along length
 ys = 0; #starting position along height
-zs = 0; #starting position along width
+zs = 0.109; #starting position along width
 
 s = [xs, ys, zs] #this is the permanent starting position which is reeferenced as the centre of the brick
 
@@ -28,27 +28,41 @@ layers = np.asarray(x1)
 m = layers.tolist() #this is a list of number of bricks in each layer. e.g. [3, 2, 1] is 3 bricks in base layer, 2 in second etc
 
 lay = [] #this is the matrix containint all the coordinates for the pyramid in x, y, z which corrrespond to length, depth, width with the brick normally orientated
+x_structure = round(xs + xb + sc*0.05,4)
 
-for j in range(0, x): #This loops the inner code from 0-x i.e. 0 to x number of layers
-    for i in range(0, m[j]): #this is doing the loop m[J] times (e.g. first time, it will look at the value of m[0] which is the number of bricks in the base layer)
-        if m[j] %2 == 0:
-            c = [xs + xb + sc*0.1, ys - ((m[j]-1)*(yb + sc*0.03)/2) + (j/2)*(yb + sc*0.03), zs + j*(zb) + sc*0.01] #This generates the coordinate of the brick depending on the layer value j. this is the changing coord of the centre of the brick on the table. We are also dropping the brick 10cm higher than the layer height needed. 
-            cnew = [] #Creates a new matrix
-            cnew = c #Makes cnew equal to the c coordinates
-            if i in range(1, m[j]): #so i needs to be between 1-m[j] as when i = 0, as this is the first loop, so creates the first recursive value to put values into the next loop
-                cnew[1] = cnew[1] + i*(yb + sc*0.03) #increased z coordinate by width + 3cm gap. This updates the cnew[2] value with the old cnew[2] value (which references the layer shift with j) and some additional shift based on the brick number in that layer i.
-                lay.append(cnew) #appending new coordinate position         
-            else:
-                lay.append(cnew) #appending first coordinate position 
-        else:
-            c = [xs + xb + sc*0.1, ys - ((m[j])*(yb + sc*0.03)/2) + (j/2)*(yb + sc*0.03), zs + j*(zb) + sc*0.01] #This generates the coordinate of the brick depending on the layer value j. this is the changing coord of the centre of the brick on the table. We are also dropping the brick 10cm higher than the layer height needed. 
-            cnew = [] #Creates a new matrix
-            cnew = c #Makes cnew equal to the c coordinates
-            if i in range(1, m[j]): #so i needs to be between 1-m[j] as when i = 0, as this is the first loop, so creates the first recursive value to put values into the next loop
-                cnew[1] = cnew[1] + i*(yb + sc*0.03) #increased z coordinate by width + 3cm gap. This updates the cnew[2] value with the old cnew[2] value (which references the layer shift with j) and some additional shift based on the brick number in that layer i.
-                lay.append(cnew) #appending new coordinate position         
-            else:
-                lay.append(cnew) #appending first coordinate position             
+for j in range(x):
+    z_structure = zs + (x-j)*(zb) + 0.03
+    
+    if (j+1)%2 == 0: #even layers
+        init_list = list(range(int((j+1)/2)))
+        rev_list = list(range(int((j+1)/2)))
+
+        for i in range(len(init_list)):
+            init_list[i] = i+0.5
+            rev_list[i] = -(i+0.5) 
+        
+        rev_list.reverse()   
+        total_list = rev_list+init_list
+
+
+        
+        #bladie
+    elif (j+1)%2 == 1: #odd layers
+        pos_list = list(range(math.ceil((j+1)/2)))
+        neg_list = list(range(-(math.floor((j+1)/2)),0))
+        total_list = neg_list + pos_list
+        
+    for item in total_list:
+        y_structure = ys + item*(yb + 0.03)
+            
+        c = [round(x_structure,4), round(y_structure,4), round(z_structure,4)]
+        
+        cnew = [] #Creates a new matrix
+        cnew = c #Makes cnew equal to the c coordinates
+        lay.append(cnew)
+        
+  
+lay.reverse()  
 print(lay)
 
 RArm = []
@@ -61,14 +75,11 @@ LArm = []
 
 for k in range(0, len(lay)):
     if lay[k][1] < ys: #lay is a list of coords in a list. This is selecting the third (i.e. z) of the k'th coordinate in the list lay. If this value is smaller than half the bottom layer length
-        RArm.append(s) 
+        #RArm.append(s) 
         RArm.append(lay[k])
     else:
-        LArm.append(s)
+        #LArm.append(s)
         LArm.append(lay[k])
         
-#print(lay)
 print(RArm)
 print(LArm)
-
-#need to change z and y around 
