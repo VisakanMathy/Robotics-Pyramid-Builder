@@ -339,7 +339,7 @@ def main(layer):
     #starting position
     xs = 0.512; #this is the starting position along length
     ys = 0; #starting position along height
-    zs = 0.109; #starting position along width
+    zs = 0.1; #starting position along width
 
     s = [xs, ys, zs] #this is the permanent starting position which is reeferenced as the centre of the brick
 
@@ -354,7 +354,7 @@ def main(layer):
     x_structure = round(xs + xb + sc*0.05,4)
 
     for j in range(x):
-        z_structure = zs + (x-j)*(zb) + 0.03
+        z_structure = zs + (x-j-1)*(zb) + 0.03
         
         if (j+1)%2 == 0: #even layers
             init_list = list(range(int((j+1)/2)))
@@ -456,6 +456,7 @@ def main(layer):
 
         count += 1
         pnp.place(block_poses[count])
+        pnp._approach(Pose(position=Point(x=0.6, y=0.3, z=0.3),orientation=overhead_orientation))
         count += 1
     
     return 0
