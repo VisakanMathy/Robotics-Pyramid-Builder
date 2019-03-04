@@ -432,7 +432,7 @@ def main(layer):
         block_poses.append(Pose(position=Point(x=coord_set[0], y=coord_set[1], z=coord_set[2]),orientation=overhead_orientation))
 
 
-
+    pnp._approach(Pose(position=Point(x=0.6, y=-0.3, z=0.3),orientation=overhead_orientation))
     count = 0
     brick = 1
 
@@ -447,8 +447,10 @@ def main(layer):
     while not rospy.is_shutdown() and count < len(block_poses):
         listen_for_left()
         move = False
+	#pnp._approach(Pose(position=Point(x=0.6, y=-0.3, z=0.3),orientation=overhead_orientation))
         #pnp_left.move_to_start(starting_joint_angles_left)
         pnp.pick(block_poses[count]) #simplified pick and place
+	pnp._approach(Pose(position=Point(x=0.6, y=-0.3, z=0.3),orientation=overhead_orientation))
         brick += 1
 
         load_brick_at_starting_point(brick)
@@ -463,7 +465,7 @@ def main(layer):
 
         count += 1
         pnp.place(block_poses[count])
-        pnp._approach(Pose(position=Point(x=0.512, y=-0.2, z=0.3),orientation=overhead_orientation))
+        pnp._approach(Pose(position=Point(x=0.6, y=-0.3, z=0.3),orientation=overhead_orientation))
         count += 1
     
     return 0
