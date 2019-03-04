@@ -283,16 +283,10 @@ def listen_for_right():
     while move == False:
         x = rospy.Subscriber('move_left_arm', Int32, print_proof)
         
-    
-    
-
 def print_proof(data):
     global move
     move = True
     
-
-
-
 
 def main(layer):
     rospy.on_shutdown(delete_gazebo_models)
@@ -442,6 +436,7 @@ def main(layer):
         print('here')
         #pnp_left.move_to_start(starting_joint_angles_left)
         pnp.pick(block_poses[count]) #simplified pick and place
+	pnp._approach(Pose(position=Point(x=0.6, y=0.3, z=0.3),orientation=overhead_orientation))
         brick += 1
 
         load_brick_at_starting_point(brick)
