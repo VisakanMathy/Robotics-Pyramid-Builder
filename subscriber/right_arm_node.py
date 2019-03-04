@@ -29,8 +29,6 @@
 
 """
 Baxter RSDK Inverse Kinematics Pick and Place Demo
-
-
 ###we changed the gripper size, and the slip coefficient, and slip value on model.sdf
 """
 from multiprocessing import Process
@@ -228,24 +226,24 @@ def load_gazebo_models(table_pose=Pose(position=Point(x=0.85, y=0, z=-0.05)),
      #   rospy.logerr("Spawn URDF service call failed: {0}".format(e))
         
 def load_brick_at_starting_point(brick_number, brick_pose=Pose(position=Point(x=0.5225, y=0, z=0.7525)),
-				brick_reference_frame =  'world'):
+                brick_reference_frame =  'world'):
 
-	model_path = rospkg.RosPack().get_path('baxter_sim_examples')+"/models/"
+    model_path = rospkg.RosPack().get_path('baxter_sim_examples')+"/models/"
     # Load Table SDF
-	
-	brick_xml = ''
+    
+    brick_xml = ''
 
-	with open (model_path + "new_brick/model.sdf", "r") as brick_file:
-		brick_xml=brick_file.read().replace('\n', '')
+    with open (model_path + "new_brick/model.sdf", "r") as brick_file:
+        brick_xml=brick_file.read().replace('\n', '')
 
-	try:
-		spawn_sdf = rospy.ServiceProxy('/gazebo/spawn_sdf_model', SpawnModel)
-		resp_sdf = spawn_sdf("new_brick_right{}".format(brick_number), brick_xml, "/",
+    try:
+        spawn_sdf = rospy.ServiceProxy('/gazebo/spawn_sdf_model', SpawnModel)
+        resp_sdf = spawn_sdf("new_brick_right{}".format(brick_number), brick_xml, "/",
                              brick_pose, brick_reference_frame)
-	except rospy.ServiceException, e:
-		rospy.logerr("Spawn SDF service call failed: {0}".format(e))
-	    # Spawn Block URDF
-	rospy.wait_for_service('/gazebo/spawn_urdf_model')
+    except rospy.ServiceException, e:
+        rospy.logerr("Spawn SDF service call failed: {0}".format(e))
+        # Spawn Block URDF
+    rospy.wait_for_service('/gazebo/spawn_urdf_model')
     
 
 
@@ -316,7 +314,7 @@ def main(layer):
                              w=0.00486450832011)
 
 
-    pnp._approach(Pose(position=Point(x=0.512, y=-0.2, z=0.3),orientation=overhead_orientation))
+    #pnp._approach(Pose(position=Point(x=0.512, y=-0.2, z=0.3),orientation=overhead_orientation))
 
 
     
@@ -431,8 +429,7 @@ def main(layer):
     for coord_set in RArm:
         block_poses.append(Pose(position=Point(x=coord_set[0], y=coord_set[1], z=coord_set[2]),orientation=overhead_orientation))
 
-
-    pnp._approach(Pose(position=Point(x=0.6, y=-0.3, z=0.3),orientation=overhead_orientation))
+    
     count = 0
     brick = 1
 
@@ -444,16 +441,17 @@ def main(layer):
         pub.publish(3)
         r.sleep()
 
+    pnp._approach(Pose(position=Point(x=0.6, y=-0.3, z=0.3),orientation=overhead_orientation))
     while not rospy.is_shutdown() and count < len(block_poses):
         listen_for_left()
         move = False
-	#pnp._approach(Pose(position=Point(x=0.6, y=-0.3, z=0.3),orientation=overhead_orientation))
+    #pnp._approach(Pose(position=Point(x=0.6, y=-0.3, z=0.3),orientation=overhead_orientation))
         #pnp_left.move_to_start(starting_joint_angles_left)
         pnp.pick(block_poses[count]) #simplified pick and place
-	pnp._approach(Pose(position=Point(x=0.6, y=-0.3, z=0.3),orientation=overhead_orientation))
+        pnp._approach(Pose(position=Point(x=0.6, y=-0.3, z=0.3),orientation=overhead_orientation))
         brick += 1
 
-        load_brick_at_starting_point(brick)
+        #load_brick_at_starting_point(brick)
 
         pub = rospy.Publisher('move_left_arm', Int32, queue_size = 10)
         
@@ -476,4 +474,3 @@ def main(layer):
 if __name__ == '__main__':
     
     listener()
-#Gareth Was Here
