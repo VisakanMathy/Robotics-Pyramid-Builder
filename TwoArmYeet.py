@@ -67,24 +67,60 @@ print('lay', lay)
 
 RArm = []
 LArm = []
-e = 0
 
+
+while len(lay) != 0:
+    z_smallest = lay[0][2]
+    list_of_index = []
+    for i in range(len(lay)):
+        if lay[i][2] < z_smallest:
+            list_of_index = [i]
+        elif lay[i][2] == z_smallest:
+            list_of_index.append(i)
+               
+    y_largest_index = list_of_index[0]
+    
+    for item in list_of_index:
+        if lay[item][1] > lay[y_largest_index][1]:
+            y_largest_index = item
+    LArm.append(lay[y_largest_index])
+    lay.remove(lay[y_largest_index])    
+          
+    if len(lay) != 0:
+        z_smallest = lay[0][2]
+        list_of_index = []
+        for i in range(len(lay)):
+            if lay[i][2] < z_smallest:
+                list_of_index = [i]
+            elif lay[i][2] == z_smallest:
+                list_of_index.append(i)
+    
+        y_smallest_index = list_of_index[0]
+        for item in list_of_index:
+            if lay[item][1] < lay[y_smallest_index][1]:
+                y_smallest_index = item
+        RArm.append(lay[y_smallest_index])
+        lay.remove(lay[y_smallest_index])        
+            
+            
+'''
 for k in range(0, len(lay)): #RULE: YOU NEED TO START WITH RARM FIRST
         if lay[k][1] == ys: #if z is equal to the reference z value, you alternate putting this value in either the right or left ar
             if e == 0: # so the k layer which contains the y = ys brick is always an even or odd layer number. Therefore to append this value into alternating RArm or LArm lists, we change the value of e
-                RArm.append(s) 
+                #RArm.append(s) 
                 RArm.append(lay[k])
                 e = 1
             elif e == 1:
-                LArm.append(s)
+                #LArm.append(s)
                 LArm.append(lay[k])
                 e = 0
         elif lay[k][1] < ys and lay[k][1] != 0: #lay is a list of coords in a list. This is selecting the third (i.e. z) of the k'th coordinate in the list lay. If this value is smaller than half the bottom layer length
-            RArm.append(s) 
+            #RArm.append(s) 
             RArm.append(lay[k])
         elif lay[k][1] > ys and lay[k][1] != 0:
-            LArm.append(s)
+            #LArm.append(s)
             LArm.append(lay[k])
+            '''
 
 print('RArm', RArm)
 print('LArm', LArm)
