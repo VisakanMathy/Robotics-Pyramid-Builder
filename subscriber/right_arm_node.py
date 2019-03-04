@@ -278,6 +278,7 @@ def listener():
     rospy.spin()
 
 def listen_for_left():
+    global move
     while move == False:
         rospy.Subscriber('move_right_arm',Int32, print_proof)
     
@@ -285,6 +286,7 @@ def listen_for_left():
 
 def print_proof(data):
     print('moved to left')
+    global move
     move = True
 
 def main(layer):
@@ -321,10 +323,10 @@ def main(layer):
 
     #brick dimensions
     xbrick = 0.192; #this is the length of the brick
-    ybrick = 0.086; #height of brick
-    zbrick = 0.062; #width of brick
+    ybrick = 0.086; #width of brick
+    zbrick = 0.062; #height of brick
 
-    #Scaled brick dimensionss
+    #Scaled brick dimensions
     xb = xbrick*sc
     yb = ybrick*sc
     zb = zbrick*sc
@@ -347,7 +349,7 @@ def main(layer):
     x_structure = round(xs + xb + sc*0.05,4)
 
     for j in range(x):
-        z_structure = zs + (x-j)*(zb) + 0.01
+        z_structure = zs + (x-j)*(zb) + 0.03
         
         if (j+1)%2 == 0: #even layers
             init_list = list(range(int((j+1)/2)))
@@ -365,7 +367,7 @@ def main(layer):
             #bladie
         elif (j+1)%2 == 1: #odd layers
             pos_list = list(range(int(math.ceil((j+1)/2))))
-            neg_list = list(range(-int(math.floor((j+1)/2)),0))
+            neg_list = list(range(int(-(math.floor((j+1)/2))),0))
             total_list = neg_list + pos_list
             
         for item in total_list:
@@ -378,20 +380,48 @@ def main(layer):
             lay.append(cnew)
             
       
-    lay.reverse()      
+    lay.reverse()  
+    print('lay', lay)
 
     RArm = []
     LArm = []
 
-
-    for k in range(0, len(lay)):
-        if lay[k][1] < ys: #lay is a list of coords in a list. This is selecting the third (i.e. z) of the k'th coordinate in the list lay. If this value is smaller than half the bottom layer length
-            RArm.append(s) 
-            RArm.append(lay[k])
-        else:
-            LArm.append(s)
-            LArm.append(lay[k])
-            
+    while len(lay) != 0:
+        z_smallest = lay[0][2]
+        list_of_index = []
+        for i in range(len(lay)):
+            if lay[i][2] < z_smallest:
+                list_of_index = [i]
+            elif lay[i][2] == z_smallest:
+                list_of_index.append(i)
+                   
+        y_largest_index = list_of_index[0]
+        
+        for item in list_of_index:
+            if lay[item][1] > lay[y_largest_index][1]:
+                y_largest_index = item
+        LArm.append(s)
+        LArm.append(lay[y_largest_index])
+        lay.remove(lay[y_largest_index])    
+              
+        if len(lay) != 0:
+            z_smallest = lay[0][2]
+            list_of_index = []
+            for i in range(len(lay)):
+                if lay[i][2] < z_smallest:
+                    list_of_index = [i]
+                elif lay[i][2] == z_smallest:
+                    list_of_index.append(i)
+        
+            y_smallest_index = list_of_index[0]
+            for item in list_of_index:
+                if lay[item][1] < lay[y_smallest_index][1]:
+                    y_smallest_index = item
+            RArm.append(s)
+            RArm.append(lay[y_smallest_index])
+            lay.remove(lay[y_smallest_index])        
+                
+                    
 
     for coord_set in RArm:
         block_poses.append(Pose(position=Point(x=coord_set[0], y=coord_set[1], z=coord_set[2]),orientation=overhead_orientation))
