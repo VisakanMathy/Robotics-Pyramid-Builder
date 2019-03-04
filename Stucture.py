@@ -31,7 +31,7 @@ lay = [] #this is the matrix containint all the coordinates for the pyramid in x
 x_structure = round(xs + xb + sc*0.05,4)
 
 for j in range(x):
-    z_structure = zs + (x-j)*(zb) + 0.03
+    z_structure = zs + (x-j-1)*(zb) + 0.03
     
     if (j+1)%2 == 0: #even layers
         init_list = list(range(int((j+1)/2)))
