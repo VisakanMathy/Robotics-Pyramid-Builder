@@ -29,8 +29,6 @@
 
 """
 Baxter RSDK Inverse Kinematics Pick and Place Demo
-
-
 ###we changed the gripper size, and the slip coefficient, and slip value on model.sdf
 """
 from multiprocessing import Process
@@ -419,8 +417,8 @@ def main(layer):
             RArm.append(s)
             RArm.append(lay[y_smallest_index])
             lay.remove(lay[y_smallest_index])   
-	            
-	                
+                
+                    
 
     for coord_set in LArm:
         block_poses.append(Pose(position=Point(x=coord_set[0], y=coord_set[1], z=coord_set[2]),orientation=overhead_orientation))
@@ -436,10 +434,10 @@ def main(layer):
         print('here')
         #pnp_left.move_to_start(starting_joint_angles_left)
         pnp.pick(block_poses[count]) #simplified pick and place
-	pnp._approach(Pose(position=Point(x=0.6, y=0.3, z=0.3),orientation=overhead_orientation))
+        pnp._approach(Pose(position=Point(x=0.6, y=0.3, z=0.3),orientation=overhead_orientation))
         brick += 1
 
-        load_brick_at_starting_point(brick)
+        #load_brick_at_starting_point(brick)
         
         pub = rospy.Publisher('move_right_arm', Int32, queue_size = 10)
         
@@ -462,4 +460,3 @@ def main(layer):
 if __name__ == '__main__':
     
     listener()
-#Gareth Was Here
