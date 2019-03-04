@@ -44,9 +44,6 @@ import time
 
 import rospy
 import rospkg
-global move
-
-move = False
 
 from gazebo_msgs.srv import (
     SpawnModel,
@@ -71,6 +68,9 @@ from baxter_core_msgs.srv import (
 )
 
 import baxter_interface
+
+global move 
+move = False
 
 class PickAndPlace(object):
     def __init__(self, limb, hover_distance = 0.2, verbose=True):
@@ -228,24 +228,24 @@ def load_gazebo_models(table_pose=Pose(position=Point(x=0.85, y=0, z=-0.05)),
      #   rospy.logerr("Spawn URDF service call failed: {0}".format(e))
         
 def load_brick_at_starting_point(brick_number, brick_pose=Pose(position=Point(x=0.5225, y=0, z=0.7525)),
-                brick_reference_frame =  'world'):
+				brick_reference_frame =  'world'):
 
-    model_path = rospkg.RosPack().get_path('baxter_sim_examples')+"/models/"
+	model_path = rospkg.RosPack().get_path('baxter_sim_examples')+"/models/"
     # Load Table SDF
-    
-    brick_xml = ''
+	
+	brick_xml = ''
 
-    with open (model_path + "new_brick/model.sdf", "r") as brick_file:
-        brick_xml=brick_file.read().replace('\n', '')
+	with open (model_path + "new_brick/model.sdf", "r") as brick_file:
+		brick_xml=brick_file.read().replace('\n', '')
 
-    try:
-        spawn_sdf = rospy.ServiceProxy('/gazebo/spawn_sdf_model', SpawnModel)
-        resp_sdf = spawn_sdf("new_brick_left{}".format(brick_number), brick_xml, "/",
+	try:
+		spawn_sdf = rospy.ServiceProxy('/gazebo/spawn_sdf_model', SpawnModel)
+		resp_sdf = spawn_sdf("new_brick_right{}".format(brick_number), brick_xml, "/",
                              brick_pose, brick_reference_frame)
-    except rospy.ServiceException, e:
-        rospy.logerr("Spawn SDF service call failed: {0}".format(e))
-        # Spawn Block URDF
-    rospy.wait_for_service('/gazebo/spawn_urdf_model')
+	except rospy.ServiceException, e:
+		rospy.logerr("Spawn SDF service call failed: {0}".format(e))
+	    # Spawn Block URDF
+	rospy.wait_for_service('/gazebo/spawn_urdf_model')
     
 
 
@@ -273,23 +273,21 @@ def callback(data):
     sys.exit(main(data.data))
 
 def listener():
-    rospy.init_node("left_arm_node")
+    rospy.init_node("right_arm_node")
     rospy.Subscriber('chatter',Int32,callback)
     rospy.spin()
 
-
-def listen_for_right():
+def listen_for_left():
+    global move
     while move == False:
-        x = rospy.Subscriber('move_left_arm', Int32, print_proof)
-        print(move)
+        rospy.Subscriber('move_right_arm',Int32, print_proof)
     
-    
+
 
 def print_proof(data):
+    print('moved to left')
+    global move
     move = True
-
-
-
 
 def main(layer):
     rospy.on_shutdown(delete_gazebo_models)
@@ -300,16 +298,15 @@ def main(layer):
     brick = 1
     hover_distance = 0.15
     print('in function')
-    joint_angles = {'left_w0': 0.6699952259595108,
-                             'left_w1': 1.030009435085784,
-                             'left_w2': -0.4999997247485215,
-                             'left_e0': -1.189968899785275,
-                             'left_e1': 1.9400238130755056,
-                             'left_s0': -0.08000397926829805,
-                             'left_s1': -0.9999781166910306}
+    joint_angles = {'right_w0': 0.33,
+                             'right_w1': 0.8,
+                             'right_w2': -0.1,
+                             'right_e0': 0,
+                             'right_e1': 1.4,
+                             'right_s0': 0.75,
+                             'right_s1': -1.1}
                              
-    pnp = PickAndPlace('left', hover_distance)
-    print('in part 2')
+    pnp = PickAndPlace('right', hover_distance)
     pnp.move_to_start(joint_angles)
  
     
@@ -326,10 +323,10 @@ def main(layer):
 
     #brick dimensions
     xbrick = 0.192; #this is the length of the brick
-    ybrick = 0.086; #height of brick
-    zbrick = 0.062; #width of brick
+    ybrick = 0.086; #width of brick
+    zbrick = 0.062; #height of brick
 
-    #Scaled brick dimensionss
+    #Scaled brick dimensions
     xb = xbrick*sc
     yb = ybrick*sc
     zb = zbrick*sc
@@ -352,7 +349,7 @@ def main(layer):
     x_structure = round(xs + xb + sc*0.05,4)
 
     for j in range(x):
-        z_structure = zs + (x-j)*(zb) + 0.01
+        z_structure = zs + (x-j)*(zb) + 0.03
         
         if (j+1)%2 == 0: #even layers
             init_list = list(range(int((j+1)/2)))
@@ -370,7 +367,7 @@ def main(layer):
             #bladie
         elif (j+1)%2 == 1: #odd layers
             pos_list = list(range(int(math.ceil((j+1)/2))))
-            neg_list = list(range(-int(math.floor((j+1)/2)),0))
+            neg_list = list(range(int(-(math.floor((j+1)/2))),0))
             total_list = neg_list + pos_list
             
         for item in total_list:
@@ -383,40 +380,75 @@ def main(layer):
             lay.append(cnew)
             
       
-    lay.reverse()      
+    lay.reverse()  
+    print('lay', lay)
 
     RArm = []
     LArm = []
 
+    while len(lay) != 0:
+        z_smallest = lay[0][2]
+        list_of_index = []
+        for i in range(len(lay)):
+            if lay[i][2] < z_smallest:
+                list_of_index = [i]
+            elif lay[i][2] == z_smallest:
+                list_of_index.append(i)
+                   
+        y_largest_index = list_of_index[0]
+        
+        for item in list_of_index:
+            if lay[item][1] > lay[y_largest_index][1]:
+                y_largest_index = item
+        LArm.append(s)
+        LArm.append(lay[y_largest_index])
+        lay.remove(lay[y_largest_index])    
+              
+        if len(lay) != 0:
+            z_smallest = lay[0][2]
+            list_of_index = []
+            for i in range(len(lay)):
+                if lay[i][2] < z_smallest:
+                    list_of_index = [i]
+                elif lay[i][2] == z_smallest:
+                    list_of_index.append(i)
+        
+            y_smallest_index = list_of_index[0]
+            for item in list_of_index:
+                if lay[item][1] < lay[y_smallest_index][1]:
+                    y_smallest_index = item
+            RArm.append(s)
+            RArm.append(lay[y_smallest_index])
+            lay.remove(lay[y_smallest_index])        
+                
+                    
 
-    for k in range(0, len(lay)):
-        if lay[k][1] < ys: #lay is a list of coords in a list. This is selecting the third (i.e. z) of the k'th coordinate in the list lay. If this value is smaller than half the bottom layer length
-            RArm.append(s) 
-            RArm.append(lay[k])
-        else:
-            LArm.append(s)
-            LArm.append(lay[k])
-            
-
-    for coord_set in LArm:
+    for coord_set in RArm:
         block_poses.append(Pose(position=Point(x=coord_set[0], y=coord_set[1], z=coord_set[2]),orientation=overhead_orientation))
 
-    load_gazebo_models()
-    load_brick_at_starting_point(0)
+
 
     count = 0
     brick = 1
+
+    pub = rospy.Publisher('move_left_arm', Int32, queue_size = 10)
+        
+    r = rospy.Rate(10)
+    start = time.time()
+    while time.time()-start < 2:
+        pub.publish(3)
+        r.sleep()
+
     while not rospy.is_shutdown() and count < len(block_poses):
-        listen_for_right()
+        listen_for_left()
         move = False
-        print('here')
         #pnp_left.move_to_start(starting_joint_angles_left)
         pnp.pick(block_poses[count]) #simplified pick and place
         brick += 1
 
         load_brick_at_starting_point(brick)
-        
-        pub = rospy.Publisher('move_right_arm', Int32, queue_size = 10)
+
+        pub = rospy.Publisher('move_left_arm', Int32, queue_size = 10)
         
         r = rospy.Rate(10)
         start = time.time()
@@ -434,6 +466,5 @@ def main(layer):
 
 
 if __name__ == '__main__':
-    
     listener()
 #Gareth Was Here
