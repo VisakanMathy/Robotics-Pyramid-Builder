@@ -29,6 +29,8 @@
 
 """
 Baxter RSDK Inverse Kinematics Pick and Place Demo
+
+
 ###we changed the gripper size, and the slip coefficient, and slip value on model.sdf
 """
 from multiprocessing import Process
@@ -60,7 +62,10 @@ from std_msgs.msg import (
     Header,
     Empty,
     String,
-    Int32
+    Int32,
+    Int64,
+    Int64MultiArray,
+    MultiArrayDimension
 )
 
 from baxter_core_msgs.srv import (
@@ -116,13 +121,15 @@ class PickAndPlace(object):
                         ikreq.SEED_NS_MAP: 'Nullspace Setpoints',
                        }.get(resp_seeds[0], 'None')
             if self._verbose:
-                print("IK Solution SUCCESS - Valid Joint Solution Found from Seed Type: {0}".format(
-                         (seed_str)))
+                print("IK Solution SUCCESS - ")
+                    #Valid Joint Solution Found from Seed Type: {0}".format(
+                     #    (seed_str)))
             # Format solution into Limb API-compatible dictionary
             limb_joints = dict(zip(resp.joints[0].name, resp.joints[0].position))
             if self._verbose:
-                print("IK Joint Solution:\n{0}".format(limb_joints))
-                print("------------------")
+                print("IK Joint Solution:")
+                    #\n{0}".format(limb_joints))
+              #  print("------------------")
         else:
             rospy.logerr("INVALID POSE - No Valid Joint Solution Found.")
             return False
@@ -278,15 +285,69 @@ def listener():
 
 def listen_for_right():
     global move
+    print('listening to the right')
+    move= False
     while move == False:
-        x = rospy.Subscriber('move_left_arm', Int32, print_proof)
+        rospy.Subscriber('move_left_arm', Int32, print_proof)
         
+   	move = False
+   	print('finished listening to right')
+
+
+
+def publish_to_right():
+    pub = rospy.Publisher('move_right_arm', Int32, queue_size = 10)
+    print('publishing to the right')
+    
+    #r = rospy.Rate(10)
+
+    start = time.time()
+    while time.time()-start < 1:
+        pub.publish(3)
+        #r.sleep()
+
+    print('finished publish_to_right')
+        
+
+        
+def listen_to_hub():
+    global topic_number
+    global value
+    print("listening to hub for {}".format(topic_number))
+    msg = rospy.wait_for_message('do_shit{}'.format(topic_number),Int64MultiArray)
+    value = msg.data[0]
+
+
+    
+def globalise_data(data):
+    global check
+    global topic_number
+    global value
+    if value != data.data[0]:
+        check = False
+        print(value)
+
+    value = data.data[0]
+    topic_number = data.data[1]+1
+    #print(value)
+
 def print_proof(data):
     global move
     move = True
     
 
+
+
+
 def main(layer):
+    global value
+    global check
+
+    global topic_number
+    topic_number = 0
+    value = 0
+
+    
     rospy.on_shutdown(delete_gazebo_models)
     rospy.wait_for_message("/robot/sim/started", Empty)
     
@@ -309,10 +370,13 @@ def main(layer):
  
     
     overhead_orientation = Quaternion(
+                             x=-0.0249590815779,
                              y=0.999649402929,
                              z=0.00737916180073,
                              w=0.00486450832011)
     
+
+    pnp._approach(Pose(position=Point(x=0.512, y=0.2, z=0.3),orientation=overhead_orientation))
     block_poses = list()
 
  
@@ -380,6 +444,7 @@ def main(layer):
     lay.reverse()  
     print('lay', lay)
 
+
     RArm = []
     LArm = []
 
@@ -417,40 +482,95 @@ def main(layer):
             RArm.append(s)
             RArm.append(lay[y_smallest_index])
             lay.remove(lay[y_smallest_index])   
-                
-                    
-
+	            
+	                
     for coord_set in LArm:
         block_poses.append(Pose(position=Point(x=coord_set[0], y=coord_set[1], z=coord_set[2]),orientation=overhead_orientation))
+
+
 
     load_gazebo_models()
     load_brick_at_starting_point(0)
 
+
+
+
     count = 0
     brick = 1
+    check = True
     while not rospy.is_shutdown() and count < len(block_poses):
-        listen_for_right()
-        move = False
-        print('here')
+        '''
+        listen_for_right()# 0 /4
         #pnp_left.move_to_start(starting_joint_angles_left)
-        pnp.pick(block_poses[count]) #simplified pick and place
-        pnp._approach(Pose(position=Point(x=0.6, y=0.3, z=0.3),orientation=overhead_orientation))
+        pnp.pick(block_poses[count]) #simplified pick and Place     0 /4
+        load_brick_at_starting_point(brick)
+        publish_to_right()  #1
+        pnp._approach(Pose(position= Point(x=0.6, y=0.2, z = 0.3),orientation= overhead_orientation)) #1
+        listen_for_right() #2
         brick += 1
-        #time.sleep(1) 
-        #load_brick_at_starting_point(brick)
-        
-        pub = rospy.Publisher('move_right_arm', Int32, queue_size = 10)
-        
-        r = rospy.Rate(10)
-        start = time.time()
-        while time.time()-start < 2:
-            pub.publish(3)
-            r.sleep()
+        count+=1
+        pnp.place(block_poses[count])#2
+        publish_to_right() #3
+        pnp._approach(Pose(position=Point(x=0.6, y=0.2, z=0.3),orientation=overhead_orientation)) #3
+        count += 1
+        '''
 
-        count += 1
-        pnp.place(block_poses[count])
-        pnp._approach(Pose(position=Point(x=0.6, y=0.3, z=0.3),orientation=overhead_orientation))
-        count += 1
+        #print(count)
+        if check == False:
+            pub = rospy.Publisher('move_right_arm_hub{}'.format(topic_number+1), Int64MultiArray, queue_size =10)
+            msg = Int64MultiArray()
+            msg.layout.dim = [MultiArrayDimension('',2,1)]
+            if value == 1:
+                #topic_number+=1
+                print("im in value1")
+                pnp._approach(Pose(position= Point(x=0.6, y=0.2, z = 0.3),orientation= overhead_orientation))
+                check =True
+                msg.data = [2,topic_number]
+                start = time.time()
+                while time.time() - start < 2:
+                    pub.publish(msg)
+                topic_number+=1
+            elif value == 2:
+                #topic_number+=1
+                print("im in value 2")
+                pnp.place(block_poses[count])
+                msg.data = [3,topic_number]
+                check =True
+                count+=1
+                start = time.time()
+                while time.time()-start < 2:
+                    pub.publish(msg)
+                topic_number+=1
+            elif value == 3:
+                #topic_number+=1
+                print("im in value 3")
+                pnp._approach(Pose(position= Point(x=0.6, y=0.2, z = 0.3),orientation= overhead_orientation))
+                check = True
+                msg.data = [4,topic_number]
+                start = time.time()
+                while time.time()-start<2:
+                    pub.publish(msg)
+                topic_number +=1
+            elif value == 4:
+                #topic_number+=1
+                print("im in value4")
+                pnp.pick(block_poses[count])
+                brick+=1
+                load_brick_at_starting_point(brick)
+                msg.data = [1,topic_number]
+                check= True
+                count+=1
+                start = time.time()
+                while time.time()-start<2:
+                    pub.publish(msg)
+                topic_number += 1
+        else:
+            #print('here')
+            listen_to_hub()
+            check = False
+            
+            
+
     
     return 0
 
@@ -460,3 +580,4 @@ def main(layer):
 if __name__ == '__main__':
     
     listener()
+#Gareth Was Here
