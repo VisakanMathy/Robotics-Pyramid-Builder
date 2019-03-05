@@ -436,7 +436,7 @@ def main(layer):
         pnp.pick(block_poses[count]) #simplified pick and place
         pnp._approach(Pose(position=Point(x=0.6, y=0.3, z=0.3),orientation=overhead_orientation))
         brick += 1
-
+        #time.sleep(1) 
         #load_brick_at_starting_point(brick)
         
         pub = rospy.Publisher('move_right_arm', Int32, queue_size = 10)
