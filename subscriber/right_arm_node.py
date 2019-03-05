@@ -441,11 +441,11 @@ def main(layer):
         pub.publish(3)
         r.sleep()
 
-    pnp._approach(Pose(position=Point(x=0.6, y=-0.3, z=0.3),orientation=overhead_orientation))
+    #pnp._approach(Pose(position=Point(x=0.6, y=-0.3, z=0.3),orientation=overhead_orientation))
     while not rospy.is_shutdown() and count < len(block_poses):
         listen_for_left()
         move = False
-    #pnp._approach(Pose(position=Point(x=0.6, y=-0.3, z=0.3),orientation=overhead_orientation))
+    #   pnp._approach(Pose(position=Point(x=0.6, y=-0.3, z=0.3),orientation=overhead_orientation))
         #pnp_left.move_to_start(starting_joint_angles_left)
         pnp.pick(block_poses[count]) #simplified pick and place
         pnp._approach(Pose(position=Point(x=0.6, y=-0.3, z=0.3),orientation=overhead_orientation))
