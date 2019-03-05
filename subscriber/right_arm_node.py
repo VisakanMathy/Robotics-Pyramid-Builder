@@ -29,6 +29,8 @@
 
 """
 Baxter RSDK Inverse Kinematics Pick and Place Demo
+
+
 ###we changed the gripper size, and the slip coefficient, and slip value on model.sdf
 """
 from multiprocessing import Process
@@ -57,7 +59,10 @@ from std_msgs.msg import (
     Header,
     Empty,
     String,
-    Int32
+    Int32,
+    Int64,
+    Int64MultiArray,
+    MultiArrayDimension
 )
 
 from baxter_core_msgs.srv import (
@@ -116,13 +121,15 @@ class PickAndPlace(object):
                         ikreq.SEED_NS_MAP: 'Nullspace Setpoints',
                        }.get(resp_seeds[0], 'None')
             if self._verbose:
-                print("IK Solution SUCCESS - Valid Joint Solution Found from Seed Type: {0}".format(
-                         (seed_str)))
+                print("IK Solution SUCCESS") 
+                    #- Valid Joint Solution Found from Seed Type: {0}".format(
+                       #  (seed_str)))
             # Format solution into Limb API-compatible dictionary
             limb_joints = dict(zip(resp.joints[0].name, resp.joints[0].position))
             if self._verbose:
-                print("IK Joint Solution:\n{0}".format(limb_joints))
-                print("------------------")
+                print("IK Joint Solution:")
+                    #\n{0}".format(limb_joints))
+              #  print("------------------")
         else:
             rospy.logerr("INVALID POSE - No Valid Joint Solution Found.")
             return False
@@ -189,8 +196,9 @@ class PickAndPlace(object):
         # retract to clear object
         self._retract()
 
+
+
     def place(self, pose):
-        # servo above pose
         self._approach(pose)
         # servo to pose
         self._servo_to_pose(pose)
@@ -226,24 +234,24 @@ def load_gazebo_models(table_pose=Pose(position=Point(x=0.85, y=0, z=-0.05)),
      #   rospy.logerr("Spawn URDF service call failed: {0}".format(e))
         
 def load_brick_at_starting_point(brick_number, brick_pose=Pose(position=Point(x=0.5225, y=0, z=0.7525)),
-                brick_reference_frame =  'world'):
+				brick_reference_frame =  'world'):
 
-    model_path = rospkg.RosPack().get_path('baxter_sim_examples')+"/models/"
+	model_path = rospkg.RosPack().get_path('baxter_sim_examples')+"/models/"
     # Load Table SDF
-    
-    brick_xml = ''
+	
+	brick_xml = ''
 
-    with open (model_path + "new_brick/model.sdf", "r") as brick_file:
-        brick_xml=brick_file.read().replace('\n', '')
+	with open (model_path + "new_brick/model.sdf", "r") as brick_file:
+		brick_xml=brick_file.read().replace('\n', '')
 
-    try:
-        spawn_sdf = rospy.ServiceProxy('/gazebo/spawn_sdf_model', SpawnModel)
-        resp_sdf = spawn_sdf("new_brick_right{}".format(brick_number), brick_xml, "/",
+	try:
+		spawn_sdf = rospy.ServiceProxy('/gazebo/spawn_sdf_model', SpawnModel)
+		resp_sdf = spawn_sdf("new_brick_right{}".format(brick_number), brick_xml, "/",
                              brick_pose, brick_reference_frame)
-    except rospy.ServiceException, e:
-        rospy.logerr("Spawn SDF service call failed: {0}".format(e))
-        # Spawn Block URDF
-    rospy.wait_for_service('/gazebo/spawn_urdf_model')
+	except rospy.ServiceException, e:
+		rospy.logerr("Spawn SDF service call failed: {0}".format(e))
+	    # Spawn Block URDF
+	rospy.wait_for_service('/gazebo/spawn_urdf_model')
     
 
 
@@ -277,8 +285,13 @@ def listener():
 
 def listen_for_left():
     global move
+    move = False
+    print('listening to left')  
     while move == False:
         rospy.Subscriber('move_right_arm',Int32, print_proof)
+        
+    move = False
+    print('finished listening to lift')
     
 
 
@@ -286,10 +299,49 @@ def print_proof(data):
     global move
     move = True
 
+def publish_to_left():
+    pub = rospy.Publisher('move_left_arm', Int32, queue_size = 10)
+    print('publishing to left')
+        
+    #r = rospy.Rate(10)
+    start = time.time()
+    while time.time()-start < 1:
+        pub.publish(3)
+        #rospy.sleep()
+    print('finished publish_to_left')
+
+def listen_to_hub():
+    global topic_number
+    global value
+    print("listening to hub for {}".format(topic_number))
+    msg = rospy.wait_for_message('do_shit{}'.format(topic_number),Int64MultiArray)
+    value = msg.data[0]
+    
+
+def globalise_data(data):
+    global value
+    global topic_number
+    global check
+    if value != data.data[0]:
+        check = False
+        print(value)
+
+    value = data.data[0]
+    topic_number = data.data[1]+1
+    
+
+
+
+
 def main(layer):
+    global value
+    global topic_number
+    global check
+
+    value = 0
+    topic_number = 0
     rospy.on_shutdown(delete_gazebo_models)
     rospy.wait_for_message("/robot/sim/started", Empty)
-    
 
     count = 0
     brick = 1
@@ -309,12 +361,13 @@ def main(layer):
  
     
     overhead_orientation = Quaternion(
+                             x=-0.0249590815779,
                              y=0.999649402929,
                              z=0.00737916180073,
                              w=0.00486450832011)
 
 
-    #pnp._approach(Pose(position=Point(x=0.512, y=-0.2, z=0.3),orientation=overhead_orientation))
+    pnp._approach(Pose(position=Point(x=0.512, y=-0.2, z=0.3),orientation=overhead_orientation))
 
 
     
@@ -422,50 +475,96 @@ def main(layer):
                     y_smallest_index = item
             RArm.append(s)
             RArm.append(lay[y_smallest_index])
-            lay.remove(lay[y_smallest_index])        
+            lay.remove(lay[y_smallest_index])      
+
                 
                     
 
     for coord_set in RArm:
         block_poses.append(Pose(position=Point(x=coord_set[0], y=coord_set[1], z=coord_set[2]),orientation=overhead_orientation))
 
-    
+
+
     count = 0
     brick = 1
 
-    pub = rospy.Publisher('move_left_arm', Int32, queue_size = 10)
-        
-    r = rospy.Rate(10)
-    start = time.time()
-    while time.time()-start < 2:
-        pub.publish(3)
-        r.sleep()
-
-    #pnp._approach(Pose(position=Point(x=0.6, y=-0.3, z=0.3),orientation=overhead_orientation))
-    while not rospy.is_shutdown() and count < len(block_poses):
-        listen_for_left()
-        move = False
-    #   pnp._approach(Pose(position=Point(x=0.6, y=-0.3, z=0.3),orientation=overhead_orientation))
-        #pnp_left.move_to_start(starting_joint_angles_left)
-        pnp.pick(block_poses[count]) #simplified pick and place
-        pnp._approach(Pose(position=Point(x=0.6, y=-0.3, z=0.3),orientation=overhead_orientation))
-        brick += 1
-
-        #load_brick_at_starting_point(brick)
-
-        pub = rospy.Publisher('move_left_arm', Int32, queue_size = 10)
-        
-        r = rospy.Rate(10)
-        start = time.time()
-        while time.time()-start < 2:
-            pub.publish(3)
-            r.sleep()
-
-        count += 1
-        pnp.place(block_poses[count])
-        pnp._approach(Pose(position=Point(x=0.6, y=-0.3, z=0.3),orientation=overhead_orientation))
-        count += 1
     
+ #   publish_to_left()   #r0
+    check = True
+    brick = 1
+    while not rospy.is_shutdown() and count < len(block_poses):
+        '''
+        listen_for_left() # 1
+        pnp.pick(block_poses[count]) #simplified pick and place     pick    1
+        brick += 1
+        load_brick_at_starting_point(brick)
+        publish_to_left() # 2
+        count += 1
+        pnp._approach(Pose(position=Point(x=0.6, y=-0.2, z=0.3),orientation=overhead_orientation)) #2
+        listen_for_left() #3
+        print('am i here?')
+        pnp.place(block_poses[count])  #3
+        publish_to_left() #4
+        pnp._approach(Pose(position=Point(x=0.6, y=-0.2, z=0.3),orientation=overhead_orientation)) #4
+        count += 1
+        '''
+        #print(count)
+        if check == False:
+            pub = rospy.Publisher('move_left_arm_hub{}'.format(topic_number+1), Int64MultiArray, queue_size =10)
+            msg = Int64MultiArray()
+            msg.layout.dim = [MultiArrayDimension('',2,1)]
+
+            if value == 1:
+                #topic_number +=1
+                print("im in value1")
+                pnp.pick(block_poses[count])
+                count+=1
+                check = True
+                brick +=1
+                msg.data = [2,topic_number]
+                load_brick_at_starting_point(brick)
+                start = time.time()
+                while time.time()- start < 2:
+                    pub.publish(msg)
+                topic_number+=1
+
+            elif value== 2:
+                #topic_number+=1
+                print("im in value2")
+                pnp._approach(Pose(position=Point(x=0.6, y=-0.2, z=0.3),orientation=overhead_orientation))
+                check = True
+                msg.data = [3,topic_number]
+                start = time.time()
+                while time.time()-start < 2:
+                    pub.publish(msg)
+                topic_number +=1
+            elif value == 3:
+                #topic_number+=1
+                print("im in value3")
+                pnp.place(block_poses[count])
+                count+=1
+                check = True
+                msg.data = [4,topic_number]
+                start = time.time()
+                while time.time() - start < 2:
+                    pub.publish(msg)
+                topic_number +=1
+            elif value == 4:
+                #topic_number+=1
+                print("im in value4")
+                pnp._approach(Pose(position=Point(x=0.6, y=-0.2, z=0.3),orientation=overhead_orientation))
+                check = True
+                msg.data = [1,topic_number]
+                start = time.time()
+                while time.time() - start < 2:
+                    pub.publish(msg)
+                topic_number +=1
+        else:
+            listen_to_hub()
+            check = False
+            
+
+
     return 0
 
 
@@ -474,3 +573,4 @@ def main(layer):
 if __name__ == '__main__':
     
     listener()
+#Gareth Was Here
