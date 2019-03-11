@@ -267,7 +267,7 @@ def delete_bricks(brick):
      
 def listen_to_hub(topic_number):
     print("listening to hub for {}".format(topic_number))
-    msg = rospy.wait_for_message('do_shit{}'.format(topic_number),Int64MultiArray)fix
+    msg = rospy.wait_for_message('do_shit{}'.format(topic_number),Int64MultiArray)
     value = msg.data[0]
     return value
 
