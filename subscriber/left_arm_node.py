@@ -52,6 +52,9 @@ def main(layer):
                     'left_e1': 1.3487800428036338,
                     'left_s0': 0.481109939761865,
                     'left_s1': -1.3757443780549539}
+
+    joint_angles = {'left_w0': -0.08042412041756966, 'left_w1': 1.6385748360237509, 'left_w2': -0.19069126257995908, 'left_e0': -0.490820123608967, 'left_e1': 1.6772691387232428, 'left_s0': -0.4379951625489787, 'left_s1': -1.776227964501175}
+
                              
     pnp = PickAndPlace('left', hover_distance)
     pnp.move_to_start(joint_angles)
@@ -64,6 +67,9 @@ def main(layer):
     for coord_set in LArm:
         block_poses.append(Pose(position=Point(x=coord_set[0], y=coord_set[1], z=coord_set[2]),orientation=overhead_orientation))
 
+    #pnp._approach(Pose(position=Point(x = 0.7, y=0, z=0.205),orientation=overhead_orientation))
+    #pnp._approach(Pose(position=Point(x = 0.3, y=-0.3, z=0.3),orientation=overhead_orientation))
+    #pnp._approach(Pose(position=Point(x = 0.5, y=0.2, z=0.3),orientation=overhead_orientation))
     load_gazebo_models()
     load_brick_at_starting_point(0)
 
