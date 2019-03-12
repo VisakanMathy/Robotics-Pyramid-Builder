@@ -294,41 +294,30 @@ def create_coordinates(layer):
     x1 = list(range(1,x+1))
     x1.reverse()
     layers = np.asarray(x1)
-    m = layers.tolist() #this is a list of number of bricks in each layer. e.g. [3, 2, 1] is 3 bricks in base layer, 2 in second etc
-
+    l = layers.tolist() #this is a list of number of bricks in each layer. e.g. [3, 2, 1] is 3 bricks in base layer, 2 in second etc
+    m = [x*2 for x in l]
     lay = [] #this is the matrix containint all the coordinates for the pyramid in x, y, z which corrrespond to length, depth, width with the brick normally orientated
     x_structure = round(xs + xb + sc*0.05,4)
 
-    for j in range(x):
-        z_structure = zs + (x-j-1)*(zb) + 0.03
-        
-        if (j+1)%2 == 0: #even layers
-            init_list = list(range(int((j+1)/2)))
-            rev_list = list(range(int((j+1)/2)))
+    for i in m:
+    
+        z_structure = zs + (x-(i/2))*zb + 0.03
+        pos_list = list(range(int((i)/2)))
+        neg_list = list(range(int(-((i)/2)),0))
+        tot_list = neg_list + pos_list
+        total_list = [x+0.5 for x in tot_list]
 
-            for i in range(len(init_list)):
-                init_list[i] = i+0.5
-                rev_list[i] = -(i+0.5) 
-            
-            rev_list.reverse()   
-            total_list = rev_list+init_list
-
-        elif (j+1)%2 == 1: #odd layers
-            pos_list = list(range(int((j+2)/2)))
-            neg_list = list(range(int(-((j)/2)),0))
-            total_list = neg_list + pos_list
-            
         for item in total_list:
             y_structure = ys + item*(yb + 0.03)
-                
-            c = [round(x_structure,4), round(y_structure,4), round(z_structure,4)]
-            
-            cnew = [] #Creates a new matrix
-            cnew = c #Makes cnew equal to the c coordinates
+
+            c = [round(x_structure, 4), round(y_structure, 4), round(z_structure, 4)]
+
+            cnew = []
+            cnew = c
             lay.append(cnew)
             
       
-    lay.reverse()  
+#    lay.reverse()  
     print('lay', lay)
     return lay, s
 
