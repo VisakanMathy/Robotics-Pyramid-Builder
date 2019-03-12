@@ -96,11 +96,10 @@ def main(layer):
                     'right_s1': -1.7486995749743792}
                          
     pnp = PickAndPlace('right', hover_distance)
-    pnp.move_to_start(joint_angles)
 
     coordinate_list, pick_coordinates = create_coordinates(layer)
-
     RArm, LArm = arrange_coordinates(coordinate_list, pick_coordinates)
+    pnp.move_to_start(joint_angles)
 
     block_poses = list()
     for coord_set in RArm:
