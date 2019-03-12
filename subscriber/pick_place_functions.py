@@ -205,7 +205,7 @@ class PickAndPlace(object):
         self._retract()
 
         
-def load_gazebo_models(table_pose=Pose(position=Point(x=0.85, y=0, z=-0.05)),
+def load_gazebo_models(table_pose=Pose(position=Point(x=0.82, y=0, z=-0.05)),
                        table_reference_frame="world"):
     # Get Models' Path
     model_path = rospkg.RosPack().get_path('baxter_sim_examples')+"/models/"
@@ -223,7 +223,7 @@ def load_gazebo_models(table_pose=Pose(position=Point(x=0.85, y=0, z=-0.05)),
         rospy.logerr("Spawn SDF service call failed: {0}".format(e))
 
         
-def load_brick_at_starting_point(brick_number, brick_pose=Pose(position=Point(x=0.52, y=0.01, z=0.752)),
+def load_brick_at_starting_point(brick_number, brick_pose=Pose(position=Point(x=0.49, y=0.01, z=0.752)),
                 brick_reference_frame =  'world'):
 
     model_path = rospkg.RosPack().get_path('baxter_sim_examples')+"/models/"
@@ -281,8 +281,8 @@ def create_coordinates(layer):
     xb = xbrick*sc
     yb = ybrick*sc
     zb = zbrick*sc
-    #starting position
-    xs = 0.52; #this is the starting position along length
+    #starting position`
+    xs = 0.49; #this is the starting position along length
     ys = 0.01; #starting position along height
     zs = 0.11; #starting position along width
 
