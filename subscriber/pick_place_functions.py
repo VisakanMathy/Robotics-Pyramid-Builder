@@ -169,7 +169,7 @@ class PickAndPlace(object):
 
     def print_position(self):
         current_pose = self._limb.endpoint_pose()
-        pprint(current_pose)
+        print(current_pose)
         x = current_pose['position'].x
         y = current_pose['position'].y
         z = current_pose['position'].z
