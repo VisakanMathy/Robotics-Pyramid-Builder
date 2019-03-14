@@ -169,7 +169,7 @@ class PickAndPlace(object):
 
     def print_position(self):
         current_pose = self._limb.endpoint_pose()
-        print(current_pose)
+        pprint(current_pose)
         x = current_pose['position'].x
         y = current_pose['position'].y
         z = current_pose['position'].z
@@ -205,25 +205,25 @@ class PickAndPlace(object):
         self._retract()
 
         
-def load_gazebo_models(table_pose=Pose(position=Point(x=0.82, y=0, z=-0.05)),
+def load_gazebo_models(table_pose=Pose(position=Point(x=0.75, y=0, z=0)),
                        table_reference_frame="world"):
     # Get Models' Path
     model_path = rospkg.RosPack().get_path('baxter_sim_examples')+"/models/"
     # Load Table SDF
     table_xml = ''
-    with open (model_path + "cafe_table/model.sdf", "r") as table_file:
+    with open (model_path + "cafe_table/table.urdf", "r") as table_file:
         table_xml=table_file.read().replace('\n', '')
 
-    rospy.wait_for_service('/gazebo/spawn_sdf_model')
+    rospy.wait_for_service('/gazebo/spawn_urdf_model')
     try:
-        spawn_sdf = rospy.ServiceProxy('/gazebo/spawn_sdf_model', SpawnModel)
+        spawn_sdf = rospy.ServiceProxy('/gazebo/spawn_urdf_model', SpawnModel)
         resp_sdf = spawn_sdf("cafe_table", table_xml, "/",
                              table_pose, table_reference_frame)
     except rospy.ServiceException, e:
         rospy.logerr("Spawn SDF service call failed: {0}".format(e))
 
         
-def load_brick_at_starting_point(brick_number, brick_pose=Pose(position=Point(x=0.49, y=0.01, z=0.752)),
+def load_brick_at_starting_point(brick_number, brick_pose=Pose(position=Point(x=0.49, y=0, z=1)),
                 brick_reference_frame =  'world'):
 
     model_path = rospkg.RosPack().get_path('baxter_sim_examples')+"/models/"
@@ -242,8 +242,25 @@ def load_brick_at_starting_point(brick_number, brick_pose=Pose(position=Point(x=
         rospy.logerr("Spawn SDF service call failed: {0}".format(e))
         # Spawn Block URDF
     rospy.wait_for_service('/gazebo/spawn_urdf_model')
-    
 
+
+def load_orientated_brick(brick_number, brick_pose=Pose(position=Point(x=0.49, y=0.0, z=1)),brick_reference_frame =  'world'):
+    model_path = rospkg.RosPack().get_path('baxter_sim_examples')+"/models/"
+    # Load Table SDF
+    
+    brick_xml = ''
+
+    with open (model_path + "new_brick/rotate_brick.urdf", "r") as brick_file:
+        brick_xml=brick_file.read().replace('\n', '')
+
+    try:
+        spawn_sdf = rospy.ServiceProxy('/gazebo/spawn_urdf_model', SpawnModel)
+        resp_sdf = spawn_sdf("new_brick{}".format(brick_number), brick_xml, "/",
+                             brick_pose, brick_reference_frame)
+    except rospy.ServiceException, e:
+        rospy.logerr("Spawn URDF service call failed: {0}".format(e))
+        # Spawn Block URDF
+    rospy.wait_for_service('/gazebo/spawn_urdf_model')
 
 
 def delete_gazebo_models():
@@ -271,7 +288,7 @@ def listen_to_hub(topic_number):
     value = msg.data[0]
     return value
 
-def create_coordinates(layer):
+def create_coordinates_new(layer):
     sc = 1; #this scales all the brick dimensions and the gaps between the bricks
     #brick dimensions
     xbrick = 0.192; #this is the length of the brick
@@ -290,18 +307,17 @@ def create_coordinates(layer):
 
     #Input for number of layers
     x = layer
-    print(layer)
     x1 = list(range(1,x+1))
     x1.reverse()
     layers = np.asarray(x1)
-    l = layers.tolist() #this is a list of number of bricks in each layer. e.g. [3, 2, 1] is 3 bricks in base layer, 2 in second etc
-    m = [x*2 for x in l]
+    l = layers.tolist() #this is a layersist of number of bricks in each layer. e.g. [3, 2, 1] is 3 bricks in base layer, 2 in second etc
+    m = [d*2 for d in l]
     lay = [] #this is the matrix containint all the coordinates for the pyramid in x, y, z which corrrespond to length, depth, width with the brick normally orientated
     x_structure = round(xs + xb + sc*0.05,4)
 
     for i in m:
-    
-        z_structure = zs + (x-(i/2))*zb + 0.03
+
+        z_structure = zs + (layer-(i/2))*zb + 0.03
         pos_list = list(range(int((i)/2)))
         neg_list = list(range(int(-((i)/2)),0))
         tot_list = neg_list + pos_list
@@ -315,13 +331,70 @@ def create_coordinates(layer):
             cnew = []
             cnew = c
             lay.append(cnew)
+    return lay, s
+
+
+def create_coordinates(layer):
+    sc = 1; #this scales all the brick dimensions and the gaps between the bricks
+    #brick dimensions
+    xbrick = 0.192; #this is the length of the brick
+    ybrick = 0.086; #width of brick
+    zbrick = 0.062; #height of brick
+    #Scaled brick dimensions
+    xb = xbrick*sc
+    yb = ybrick*sc
+    zb = zbrick*sc
+    #starting position`
+    xs = 0.49    ; #this is the starting position along length
+    ys = 0.01; #starting position along height
+    zs = 0.11; #starting position along width
+
+    s = [xs, ys, zs] #this is the permanent starting position which is reeferenced as the centre of the brick
+
+    #Input for number of layers
+    x = layer
+    print(layer)
+    x1 = list(range(1,x+1))
+    x1.reverse()
+    layers = np.asarray(x1)
+    m = layers.tolist() #this is a list of number of bricks in each layer. e.g. [3, 2, 1] is 3 bricks in base layer, 2 in second etc
+
+    lay = [] #this is the matrix containint all the coordinates for the pyramid in x, y, z which corrrespond to length, depth, width with the brick normally orientated
+    x_structure = round(xs + xb + sc*0.05,4)
+
+    for j in range(x):
+        z_structure = zs + (x-j-1)*(zb) + 0.03
+        
+        if (j+1)%2 == 0: #even layers
+            init_list = list(range(int((j+1)/2)))
+            rev_list = list(range(int((j+1)/2)))
+
+            for i in range(len(init_list)):
+                init_list[i] = i+0.5
+                rev_list[i] = -(i+0.5) 
+            
+            rev_list.reverse()   
+            total_list = rev_list+init_list
+
+        elif (j+1)%2 == 1: #odd layers
+            pos_list = list(range(int((j+2)/2)))
+            neg_list = list(range(int(-((j)/2)),0))
+            total_list = neg_list + pos_list
+            
+        for item in total_list:
+            y_structure = ys + item*(yb + 0.03)   
+            c = [round(x_structure,4), round(y_structure,4), round(z_structure,4)]
+            
+            cnew = [] #Creates a new matrix
+            cnew = c #Makes cnew equal to the c coordinates
+            lay.append(cnew)
             
       
-#    lay.reverse()  
+    lay.reverse()  
     print('lay', lay)
     return lay, s
 
-def arrange_coordinates(lay, s):
+def arrange_coordinates(lay):
     RArm = []
     LArm = []
 
@@ -339,7 +412,6 @@ def arrange_coordinates(lay, s):
         for item in list_of_index:
             if lay[item][1] > lay[y_largest_index][1]:
                 y_largest_index = item
-        LArm.append(s)
         LArm.append(lay[y_largest_index])
         lay.remove(lay[y_largest_index])    
               
@@ -356,9 +428,11 @@ def arrange_coordinates(lay, s):
             for item in list_of_index:
                 if lay[item][1] < lay[y_smallest_index][1]:
                     y_smallest_index = item
-            RArm.append(s)
             RArm.append(lay[y_smallest_index])
             lay.remove(lay[y_smallest_index])  
+
+    print('Rarm',RArm)
+    print('LArm',LArm)
     return RArm, LArm    
 
                 
