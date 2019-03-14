@@ -209,13 +209,13 @@ def load_gazebo_models(table_pose=Pose(position=Point(x=0.75, y=0, z=0)),
                        table_reference_frame="world"):
     # Get Models' Path
     model_path = rospkg.RosPack().get_path('baxter_sim_examples')+"/models/"
-    # Load Table SDF
+    # Load Table URDF
     table_xml = ''
     with open (model_path + "cafe_table/table.urdf", "r") as table_file:
         table_xml=table_file.read().replace('\n', '')
 
     rospy.wait_for_service('/gazebo/spawn_urdf_model')
-    try:
+    try: #Spawn the table into gazebo
         spawn_sdf = rospy.ServiceProxy('/gazebo/spawn_urdf_model', SpawnModel)
         resp_sdf = spawn_sdf("cafe_table", table_xml, "/",
                              table_pose, table_reference_frame)
@@ -227,13 +227,13 @@ def load_brick_at_starting_point(brick_number, brick_pose=Pose(position=Point(x=
                 brick_reference_frame =  'world'):
 
     model_path = rospkg.RosPack().get_path('baxter_sim_examples')+"/models/"
-    # Load Table SDF
+    # Load brick URDF into the starting position
     
     brick_xml = ''
 
     with open (model_path + "new_brick/model.sdf", "r") as brick_file:
         brick_xml=brick_file.read().replace('\n', '')
-
+    #Spawn the brick into the starting position
     try:
         spawn_sdf = rospy.ServiceProxy('/gazebo/spawn_sdf_model', SpawnModel)
         resp_sdf = spawn_sdf("new_brick_left{}".format(brick_number), brick_xml, "/",
@@ -246,20 +246,20 @@ def load_brick_at_starting_point(brick_number, brick_pose=Pose(position=Point(x=
 
 def load_orientated_brick(brick_number, brick_pose=Pose(position=Point(x=0.49, y=0.0, z=1)),brick_reference_frame =  'world'):
     model_path = rospkg.RosPack().get_path('baxter_sim_examples')+"/models/"
-    # Load Table SDF
+    # Load brick URDF into the correct position
     
     brick_xml = ''
 
     with open (model_path + "new_brick/rotate_brick.urdf", "r") as brick_file:
         brick_xml=brick_file.read().replace('\n', '')
-
+    # Spawn Brick URDF into the correct position
     try:
         spawn_sdf = rospy.ServiceProxy('/gazebo/spawn_urdf_model', SpawnModel)
         resp_sdf = spawn_sdf("new_brick{}".format(brick_number), brick_xml, "/",
                              brick_pose, brick_reference_frame)
     except rospy.ServiceException, e:
         rospy.logerr("Spawn URDF service call failed: {0}".format(e))
-        # Spawn Block URDF
+        
     rospy.wait_for_service('/gazebo/spawn_urdf_model')
 
 
