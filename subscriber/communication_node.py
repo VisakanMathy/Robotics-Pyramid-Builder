@@ -72,7 +72,8 @@ def listener(): #Function to check whether the arms have completed their movemen
 		move_right =msg_right.data
 
 		if move_left[1] == topic_number and move_right[1] == topic_number: #If BOTH arms have completed their movements
-			topic_number +=1 #The topic number increases by one in every iteration to make sure the listener is checking for the latest information
+			#The topic number increases by one in every iteration to make sure the listener is checking for the latest information
+			topic_number +=1
 			print('move right {}'.format(move_right))
 			print('move left {}'. format(move_left))
 			callback(move_left[0])
