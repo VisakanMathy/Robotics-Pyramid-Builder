@@ -9,8 +9,8 @@ global topic_number
 
 
 topic_number = 0
-move_left = [6,8]
-move_right = [5,7]
+move_left = [6,8] #This is the 'left position' of the left arm
+move_right = [5,7] #This is the 'right position' of the right arm
 
 def callbackleft(data):
 	global move_left 
@@ -21,7 +21,7 @@ def callbackright(data):
 	move_right = data.data
 
 def callback(data):
-	global topic_number
+	global topic_number #Topic numbers are used in the communication node
 	global move_left
 	global move_right
 	pub = rospy.Publisher('do_shit{}'.format(topic_number), Int64MultiArray, queue_size = 10)
@@ -32,22 +32,19 @@ def callback(data):
 	print('here')
 
 	while time.time()-start < 5:
-		#print(data)
 		print(msg.data)
-		#print('hi')
-		if data == 1:
-			msg.data = [1,topic_number]
-			pub.publish(msg)  #left picked right moving to pick
-		elif data== 2:
+		if data == 1: 			#Position 1: left picked, right moving to pick
+			msg.data = [1,topic_number] 	#This message indicates the position and topic number
+			pub.publish(msg) 		#The message is published to the communication node
+		elif data== 2: 			#Position 2: right picked, left moving to place
 			msg.data = [2,topic_number]
-			pub.publish(msg)	#right picked left moving to place
-		elif data== 3:
+			pub.publish(msg)
+		elif data== 3:			#Position 3: left placed, right moving to place
 			msg.data = [3,topic_number]
-			pub.publish(msg)	#left placed right moving to placed
-		elif data == 4:
+			pub.publish(msg)
+		elif data == 4:			#Position 4: right placed, left moving to pick
 			msg.data = [4,topic_number]
-			pub.publish(msg)	#right placed left moving to pick
-			#print('here')
+			pub.publish(msg)
 	move_right = [5,7]
 	move_left = [6,8]
 		
@@ -55,12 +52,11 @@ def callback(data):
 
 
 
-def listener():
+def listener(): #Function to check whether the arms have completed their movements
 	global move_left
 	global move_right
 	global topic_number
 	while not rospy.is_shutdown():
-		#print("listening")
 		'''
 		rospy.Subscriber('move_left_arm_hub{}'.format(topic_number+1), Int64MultiArray, callbackleft)
 		rospy.Subscriber('move_right_arm_hub{}'.format(topic_number+1), Int64MultiArray, callbackright)
@@ -72,25 +68,16 @@ def listener():
 			msg_right = rospy.wait_for_message('move_right_arm_hub{}'.format(topic_number+1), Int64MultiArray)
 			msg_left =  rospy.wait_for_message('move_left_arm_hub{}'.format(topic_number+1),Int64MultiArray)
 
-
 		move_left = msg_left.data
 		move_right =msg_right.data
 
-		#print('topic: {} \tleft: {}\t right: {}'.format(topic_number,move_left,move_right))
-
-		#print('move right {}'.format(move_right))
-		#print('move left {}'.format(move_left))
-
-		if move_left[1] == topic_number and move_right[1] == topic_number:
-			topic_number +=1
+		if move_left[1] == topic_number and move_right[1] == topic_number: #If BOTH arms have completed their movements
+			topic_number +=1 #The topic number increases by one in every iteration to make sure the listener is checking for the latest information
 			print('move right {}'.format(move_right))
 			print('move left {}'. format(move_left))
 			callback(move_left[0])
+
 			
-	#rospy.spin()
-
-
-
 if __name__ == '__main__':
 	rospy.init_node("hub")
 	pub = rospy.Publisher('do_shit{}'.format(topic_number), Int64MultiArray, queue_size = 10)
@@ -103,6 +90,5 @@ if __name__ == '__main__':
 	while time.time() - start < 3:
 		msg.data = [4,topic_number]
 		pub.publish(msg)
-
 
 	listener()
