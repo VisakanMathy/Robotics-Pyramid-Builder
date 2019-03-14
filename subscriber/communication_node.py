@@ -48,9 +48,6 @@ def callback(data):
 	move_right = [5,7]
 	move_left = [6,8]
 		
-		
-
-
 
 def listener(): #Function to check whether the arms have completed their movements
 	global move_left
