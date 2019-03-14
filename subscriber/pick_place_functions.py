@@ -329,14 +329,14 @@ def create_coordinates_new(layer):
 
     for i in m:
 
-        z_structure = zs + (layer-(i/2))*zb + 0.03
-        pos_list = list(range(int((i)/2)))
-        neg_list = list(range(int(-((i)/2)),0))
+        z_structure = zs + (layer-(i/2))*zb + 0.03 # this finds the height of layers of brick
+        pos_list = list(range(int((i)/2))) # creates a range of positive integers for left arm
+        neg_list = list(range(int(-((i)/2)),0)) # reates a range of negative integers for right arm
         tot_list = neg_list + pos_list
-        total_list = [x+0.5 for x in tot_list]
+        total_list = [x+0.5 for x in tot_list] # shifts all these integers by 0.5 so the bricks are put in 'even' positions
 
         for item in total_list:
-            y_structure = ys + item*(yb + 0.03)
+            y_structure = ys + item*(yb + 0.03) # finds y width of brick 
 
             c = [round(x_structure, 4), round(y_structure, 4), round(z_structure, 4)]
 
