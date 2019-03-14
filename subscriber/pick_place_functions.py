@@ -40,7 +40,6 @@ import copy
 import numpy as np
 import math
 import time
-
 import rospy
 import rospkg
 
@@ -98,6 +97,9 @@ class PickAndPlace(object):
         rospy.sleep(1.0)
         print("Running. Ctrl-c to quit")
 
+        
+    ## More information about the following lines of code can be found in the documentation under 'Pre-existing Demo Code'.
+    
     def ik_request(self, pose):
         hdr = Header(stamp=rospy.Time.now(), frame_id='base')
         ikreq = SolvePositionIKRequest()
@@ -130,7 +132,8 @@ class PickAndPlace(object):
             rospy.logerr("INVALID POSE - No Valid Joint Solution Found.")
             return False
         return limb_joints
-
+    
+ ## More information about the following lines of code can be found in the documentation under 'Pre-existing Demo Code'.
     def _guarded_move_to_joint_position(self, joint_angles):
         if joint_angles:
             self._limb.move_to_joint_positions(joint_angles)
@@ -145,6 +148,8 @@ class PickAndPlace(object):
         self._gripper.close()
         rospy.sleep(1.0)
 
+  ## More information about the following lines of code can be found in the documentation under 'Pre-existing Demo Code'.
+            
     def _approach(self, pose):
         approach = copy.deepcopy(pose)
         # approach with a pose the hover-distance above the requested pose
@@ -166,20 +171,25 @@ class PickAndPlace(object):
         joint_angles = self.ik_request(ik_pose)
         # servo up from current pose
         self._guarded_move_to_joint_position(joint_angles)
-
+        
+ ## The next function definition is a quick check to test whether the end effector has actually gone to the coordinates specified. 
+## More information about the following lines of code can be found in the documentation under 'Our process'.
     def print_position(self):
         current_pose = self._limb.endpoint_pose()
-        pprint(current_pose)
-        x = current_pose['position'].x
+        print(current_pose) #this is the current pose of the end effector
+        x = current_pose['position'].x 
         y = current_pose['position'].y
         z = current_pose['position'].z
-        print(x, y, z)
-
+        print(x, y, z) #this prints out the x, y and z values of the end effector location.
+        
+        
+ ## More information about the following lines of code can be found in the documentation under 'Pre-existing Demo Code'.
     def _servo_to_pose(self, pose):
         # servo down to release
         joint_angles = self.ik_request(pose)
         self._guarded_move_to_joint_position(joint_angles)
-
+        
+ ## More information about the following lines of code can be found in the documentation under 'Pre-existing Demo Code'.
     def pick(self, pose):
         self._hover_distance = self._hover_distance/2
         # open the gripper
@@ -194,6 +204,7 @@ class PickAndPlace(object):
         self._retract()
         self._hover_distance = self._hover_distance*2
 
+  ## More information about the following lines of code can be found in the documentation under 'Pre-existing Demo Code'.
     def place(self, pose):
         # servo above pose
         self._approach(pose)
@@ -204,7 +215,7 @@ class PickAndPlace(object):
         # retract to clear object
         self._retract()
 
-        
+ ## This loads the cafe table. More information about the following lines of code can be found in the documentation under 'Setting up the environment'.
 def load_gazebo_models(table_pose=Pose(position=Point(x=0.75, y=0, z=0)),
                        table_reference_frame="world"):
     # Get Models' Path
@@ -213,16 +224,16 @@ def load_gazebo_models(table_pose=Pose(position=Point(x=0.75, y=0, z=0)),
     table_xml = ''
     with open (model_path + "cafe_table/table.urdf", "r") as table_file:
         table_xml=table_file.read().replace('\n', '')
-
     rospy.wait_for_service('/gazebo/spawn_urdf_model')
     try: #Spawn the table into gazebo
         spawn_sdf = rospy.ServiceProxy('/gazebo/spawn_urdf_model', SpawnModel)
         resp_sdf = spawn_sdf("cafe_table", table_xml, "/",
-                             table_pose, table_reference_frame)
+                             table_pose, table_reference_frame) 
     except rospy.ServiceException, e:
         rospy.logerr("Spawn SDF service call failed: {0}".format(e))
 
         
+  ## This loads the brick. More information about the following lines of code can be found in the documentation under 'Setting up the environment'.       
 def load_brick_at_starting_point(brick_number, brick_pose=Pose(position=Point(x=0.49, y=0, z=1)),
                 brick_reference_frame =  'world'):
 
@@ -230,20 +241,19 @@ def load_brick_at_starting_point(brick_number, brick_pose=Pose(position=Point(x=
     # Load brick URDF into the starting position
     
     brick_xml = ''
-
     with open (model_path + "new_brick/model.sdf", "r") as brick_file:
         brick_xml=brick_file.read().replace('\n', '')
     #Spawn the brick into the starting position
     try:
         spawn_sdf = rospy.ServiceProxy('/gazebo/spawn_sdf_model', SpawnModel)
         resp_sdf = spawn_sdf("new_brick_left{}".format(brick_number), brick_xml, "/",
-                             brick_pose, brick_reference_frame)
+                             brick_pose, brick_reference_frame)  
     except rospy.ServiceException, e:
         rospy.logerr("Spawn SDF service call failed: {0}".format(e))
         # Spawn Block URDF
     rospy.wait_for_service('/gazebo/spawn_urdf_model')
 
-
+ ## Orientates the brick. More information about the following lines of code can be found in the documentation under 'Orientation of end-effector'.
 def load_orientated_brick(brick_number, brick_pose=Pose(position=Point(x=0.49, y=0.0, z=1)),brick_reference_frame =  'world'):
     model_path = rospkg.RosPack().get_path('baxter_sim_examples')+"/models/"
     # Load brick URDF into the correct position
@@ -262,7 +272,7 @@ def load_orientated_brick(brick_number, brick_pose=Pose(position=Point(x=0.49, y
         
     rospy.wait_for_service('/gazebo/spawn_urdf_model')
 
-
+ ## More information about the following lines of code can be found in the documentation under 'Deleting the model and bricks'
 def delete_gazebo_models():
     # This will be called on ROS Exit, deleting Gazebo models
     # Do not wait for the Gazebo Delete Model service, since
@@ -274,7 +284,7 @@ def delete_gazebo_models():
     except rospy.ServiceException, e:
         rospy.loginfo("Delete Model service call failed: {0}".format(e))
 
-
+ ## More information about the following lines of code can be found in the documentation under 'Deleting the model and bricks'
 def delete_bricks(brick):
     for item in range(brick):
         try:
