@@ -333,6 +333,7 @@ def create_coordinates_new(layer):
             lay.append(cnew)
     return lay, s
 
+# SEE COORDINATE GENERATION OF DOCUMENTATION - explains logic of these two functions in detail.
 
 def create_coordinates(layer):
     sc = 1; #this scales all the brick dimensions and the gaps between the bricks
@@ -360,80 +361,80 @@ def create_coordinates(layer):
     m = layers.tolist() #this is a list of number of bricks in each layer. e.g. [3, 2, 1] is 3 bricks in base layer, 2 in second etc
 
     lay = [] #this is the matrix containint all the coordinates for the pyramid in x, y, z which corrrespond to length, depth, width with the brick normally orientated
-    x_structure = round(xs + xb + sc*0.05,4)
+    x_structure = round(xs + xb + sc*0.05,4) #the x coordinate for all bricks is the same 
 
-    for j in range(x):
-        z_structure = zs + (x-j-1)*(zb) + 0.03
+    for j in range(x): #this is a for loop of length(number of layers)
+        z_structure = zs + (x-j-1)*(zb) + 0.03 #this is the z height of the brick. This depends on the layer number. We also included a 0.03 gap between the new brick and the layer below so as not to knock it
         
         if (j+1)%2 == 0: #even layers
-            init_list = list(range(int((j+1)/2)))
+            init_list = list(range(int((j+1)/2))) #produces a list of the right size
             rev_list = list(range(int((j+1)/2)))
 
             for i in range(len(init_list)):
-                init_list[i] = i+0.5
-                rev_list[i] = -(i+0.5) 
+                init_list[i] = i+0.5 #list which is half size of layer. This produces 0.5, 1.5, 2.5 etc i.e. a shift of 0.5 brick lengths on each position compared to the odd layer below
+                rev_list[i] = -(i+0.5) #list which is half size of layer. This produces -0.5, -1.5, -2.5 etc i.e. a shift of 0.5 brick lengths on each position compared to the odd layer below
             
-            rev_list.reverse()   
-            total_list = rev_list+init_list
+            rev_list.reverse()   #reversed so it goes from smallest neg value to largest, e.g. -2.5, -1.5, -0.5 making this a mirror of init_list
+            total_list = rev_list+init_list #add lists
 
         elif (j+1)%2 == 1: #odd layers
-            pos_list = list(range(int((j+2)/2)))
-            neg_list = list(range(int(-((j)/2)),0))
+            pos_list = list(range(int((j+2)/2))) #creates list of 1, 2, 3, 4, etc (j cannot be an odd number)
+            neg_list = list(range(int(-((j)/2)),0)) #creates list of 0, -1, -2, -3, -4, etc (j cannot be an odd number)
             total_list = neg_list + pos_list
             
         for item in total_list:
-            y_structure = ys + item*(yb + 0.03)   
-            c = [round(x_structure,4), round(y_structure,4), round(z_structure,4)]
+            y_structure = ys + item*(yb + 0.03)   #then we times the item in total list (i.e. our init_list, rev)list, pos_list or neg_list value) with the brick width and gap
+            c = [round(x_structure,4), round(y_structure,4), round(z_structure,4)] #c is the coordinate
             
             cnew = [] #Creates a new matrix
             cnew = c #Makes cnew equal to the c coordinates
-            lay.append(cnew)
+            lay.append(cnew) #appends cnew to lay
             
       
     lay.reverse()  
     print('lay', lay)
     return lay, s
 
-def arrange_coordinates(lay):
-    RArm = []
-    LArm = []
+def arrange_coordinates(lay): #arranges coordinates so they are ready to be processed by the arms
+    RArm = [] # coordinates for right arm
+    LArm = [] # coordinates for left arm
 
-    while len(lay) != 0:
-        z_smallest = lay[0][2]
-        list_of_index = []
-        for i in range(len(lay)):
-            if lay[i][2] < z_smallest:
+    while len(lay) != 0: #whilst there are values in lay
+        z_smallest = lay[0][2] 
+        list_of_index = [] 
+        for i in range(len(lay)): 
+            if lay[i][2] < z_smallest: #ordering the values into list_of_index based on smallest z height value
                 list_of_index = [i]
             elif lay[i][2] == z_smallest:
                 list_of_index.append(i)
                    
-        y_largest_index = list_of_index[0]
+        y_largest_index = list_of_index[0] 
         
-        for item in list_of_index:
-            if lay[item][1] > lay[y_largest_index][1]:
+        for item in list_of_index: 
+            if lay[item][1] > lay[y_largest_index][1]: # we now order based on the largest y value. Large positive y values are appended to the left arm. 
                 y_largest_index = item
-        LArm.append(lay[y_largest_index])
-        lay.remove(lay[y_largest_index])    
+        LArm.append(lay[y_largest_index])  #This value is put into LArm
+        lay.remove(lay[y_largest_index])    #this coordinate is removed from lay ready for the next loop
               
-        if len(lay) != 0:
+        if len(lay) != 0: #if there is still values in lay (i.e. if the for loop above removes the last cordinate, the code should skip this if statement (produces list out of range error otherwise)
             z_smallest = lay[0][2]
             list_of_index = []
             for i in range(len(lay)):
-                if lay[i][2] < z_smallest:
+                if lay[i][2] < z_smallest: #ordering the values into list_of_index based on smallest z height value
                     list_of_index = [i]
                 elif lay[i][2] == z_smallest:
                     list_of_index.append(i)
         
             y_smallest_index = list_of_index[0]
             for item in list_of_index:
-                if lay[item][1] < lay[y_smallest_index][1]:
+                if lay[item][1] < lay[y_smallest_index][1]: # we now order based on the largest y value. Those most negative will be given to the right arm. This means the arms will work 'inwards' which will look cool.
                     y_smallest_index = item
-            RArm.append(lay[y_smallest_index])
-            lay.remove(lay[y_smallest_index])  
+            RArm.append(lay[y_smallest_index]) #This value is put into RArm
+            lay.remove(lay[y_smallest_index])  #this coordinate is removed from lay ready for the next loop
 
     print('Rarm',RArm)
     print('LArm',LArm)
-    return RArm, LArm    
+    return RArm, LArm    #these are then used by the left and right arm
 
                 
                     
