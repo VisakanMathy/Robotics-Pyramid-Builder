@@ -24,6 +24,8 @@ def callback(data):
 	global topic_number #Topic numbers are used in the communication node
 	global move_left
 	global move_right
+	
+	#Messages are published to the 'hub' to state if the robot arms are ready to move
 	pub = rospy.Publisher('do_shit{}'.format(topic_number), Int64MultiArray, queue_size = 10)
 	msg = Int64MultiArray()
 	msg.layout.dim = [MultiArrayDimension('',2,1)]
@@ -53,12 +55,13 @@ def listener(): #Function to check whether the arms have completed their movemen
 	global move_left
 	global move_right
 	global topic_number
+	
 	while not rospy.is_shutdown():
 		'''
 		rospy.Subscriber('move_left_arm_hub{}'.format(topic_number+1), Int64MultiArray, callbackleft)
 		rospy.Subscriber('move_right_arm_hub{}'.format(topic_number+1), Int64MultiArray, callbackright)
 		'''
-		if topic_number%2 == 0:
+		if topic_number%2 == 0: #Switch the order of left and right arms for even and odd topic numbers
 			msg_left = rospy.wait_for_message('move_left_arm_hub{}'.format(topic_number+1), Int64MultiArray)
 			msg_right= rospy.wait_for_message('move_right_arm_hub{}'.format(topic_number+1), Int64MultiArray)
 		else:
