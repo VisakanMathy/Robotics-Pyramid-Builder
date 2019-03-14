@@ -288,6 +288,8 @@ def listen_to_hub(topic_number):
     value = msg.data[0]
     return value
 
+# SEE COORDINATE GENERATION OF DOCUMENTATION - explains logic of these two functions in detail.
+
 def create_coordinates_new(layer):
     sc = 1; #this scales all the brick dimensions and the gaps between the bricks
     #brick dimensions
@@ -332,8 +334,6 @@ def create_coordinates_new(layer):
             cnew = c
             lay.append(cnew)
     return lay, s
-
-# SEE COORDINATE GENERATION OF DOCUMENTATION - explains logic of these two functions in detail.
 
 def create_coordinates(layer):
     sc = 1; #this scales all the brick dimensions and the gaps between the bricks
